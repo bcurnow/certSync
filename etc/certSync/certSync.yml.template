@@ -1,0 +1,15 @@
+conf-dir: /etc/certSync
+certificate-server-url: https://certs
+certificate-server-key: /etc/certSync/<host>.key
+certificate-server-cert: /etc/certSync/<host>.crt
+certificate-target-dir: /etc/certSync/certs
+certs:
+  - name: <my Let's Encrypt domain>
+    files:
+      - name: cert.pem
+      - name: chain.pem
+      - name: fullchain.pem
+      - name: privkey.pem
+        mode: 750 
+      - name: README
+    scripts:
