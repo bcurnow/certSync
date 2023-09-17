@@ -1,13 +1,15 @@
 # certSync
-Bash script to keep certificates in sync from a certificate auth enable central certificate server.
+Bash script to keep certificates in sync.
 
-I manage certificates on my local network with a combination of a custom OpenSSL CA for client-auth and Let's Encrypt for everything else.
+It supports two modes:
+- `http` - Downloads the certificates from a URL which is secured with mTLS
+- `directory` - Synchronizes two directories (e.g. the certBot live directory to another directory)
+
+This was built to handle my local network which I manage with a combination of a custom OpenSSL CA for mTLS and Let's Encrypt for everything else.
 
 I wanted to way to manage the renewals across the various machines as some certificates are shared (I have a wildcard cert for my internal domain) and I didn't want to configure certbot everywhere.
 
-I settled on have a single machine manaages all the Let's Encrypt certificates as well as own the client autentication OpenSSL CA and then expose those certificates (and keys) via Nginx.
-
-However, to avoid the security issue of having private keys available to just anyone, I locked down the instance so the only authentication was via mTLS.
+I settled on having a single machine which manaages all the Let's Encrypt certificates (with certBot) as well as the mTLS OpenSSL CA. I then expose those certificates (and keys) via Nginx with mTLS.
 
 # Nginx Configuration
 
@@ -36,7 +38,7 @@ services:
         read_only: true
 ```
 
-The certificates are hosted out of the /etc/docker-certs directory, with that directory I have a directory for each certificate that Let's Encrypt manages plus a client-auth directory which costs the internal OpenSSL certificate authority.
+The certificates are hosted out of the /etc/docker-certs directory, within that directory I have a sub-directory for each domain that Let's Encrypt manages plus a client-auth directory which costs the internal OpenSSL certificate authority.
 
 Here's a snippet of the Nginx configuration:
 ```
@@ -59,7 +61,9 @@ server {
 }
 ```
 
-The /etc/docker-certs directory is mapped to /certs within the docker container and the ssl_client_certificate points to my OpenSSL CA.
+The Nginx instance is set up with simply a trusted CA and any certificate issued by that CA can see all the certificates and keys. This could be imporved by setting up specific certificates to get access to specific directories but that really felt overkill.
+
+The /etc/docker-certs directory is then mapped to /certs within the various docker containers.
 
 # OpenSSL CA
 The OpenSSL CA is created using the following commands:
@@ -73,28 +77,62 @@ For each machine that needs to sync up their certificates, I generate a client c
 - `rm <server host name here>.csr` - This is the signing request file, no longer needed after we're done
 
 # Setting up certSync
-Once the Nginx and OpenSSL setups are complete, I put certSync.sh in /opt/certSync and then create the /etc/certSync/ and /etc/certSync/scripts directories and finally copy the <server host name here>.key and <server host name here>.crt files to /etc/certSync.
+Once the Nginx and OpenSSL setups are complete, I put certSync.sh in /opt/certSync and then create the /etc/certSync and /etc/certSync/scripts directories and finally copy the <server host name here>.key and <server host name here>.crt files to /etc/certSync.
 
 I setup cron to run certSync.sh every day.
 
 The configuration file, which I default to /etc/certSync/certSync.yml looks like this:
 ```
-certificate-server-url: <ip or dns name for the Nginx server>
-certificate-server-key: /etc/certSync/<server host name here>.key
-certificate-server-cert: /etc/certSync/<server host name here>.crt
-certificate-target-dir: /etc/certSync/certs
-certs:
-  - name: <the directory where this servers certificates are stored>
-    files:
-      - name: <cert file>
-      - name: <key file>
-        mode: 750
-    scripts:
-      - /etc/certSync/scripts/update-my-stuff.sh
+conf-dir: /etc/certSync
+scripts-dir: /etc/certSync/scripts
+sync:
+  - name: nginx-sync
+    type: http
+    cache-dir: /etc/certSync/cache
+    target-dir: /etc/certSync/certs
+    url: https://certs
+    key: /etc/certSync/<host>.key
+    cert: /etc/certSync/<host>.crt
+    domains:
+      - name: <certificate domain name 1>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
+      - name: <certificate domain name 2>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
+  - name: letsencrypt-dir-sync
+    type: directory
+    source-dir: /opt/letsencrypt/etc/letsencrypt/live
+    target-dir: /etc/ssl
+    domains:
+      - name <certificate domain name 1>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
+      - name <certificate domain name 2>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
 ```
 
-Because I create a directory stucture under the /etc/docker-certs directory where there's a directory for each Let's Encrypt certificate domain that I have, I set the `name` to the certificate domain name. I typically download the cert.pem and privkey.pem files. The mode propery ensures that the script will lock down the private key.
+This maintains the structure of a directory to store the certs with a sub-directory for each domain (I use client-auth to store the mTLS files). I typically download at least the cert.pem and privkey.pem files.
 
-The script (or scripts) you configure can then take the appropriate action to implement the updated certificates. They are only triggered when certSync detects a change to a certificate. This typically involves restarting a docker container, copying files, converting files, etc.
+The optional mode propery ensures that the script will lock down the file, this is typically used for the private key.
 
-For example, I use a Let's Encrypt certificate for my Octoprint setup. The script I use for that certificate concatenates the fullchain.pem and privkey.pem files from Let's Encrypt into /etc/ssl/snakeoil.pem and then restart HA proxy to make it take effect.
+The script (or scripts) you configure can then take the appropriate action to implement the updated certificates. They are only triggered when certSync detects a change to a certificate. My scripts typically restart a docker container, copy files, convert files, etc.
+
+An example: I use a Let's Encrypt certificate for my Octoprint setup. The script I use for that certificate concatenates the fullchain.pem and privkey.pem files from Let's Encrypt into /etc/ssl/snakeoil.pem and then restarts HA proxy to make it take effect.
