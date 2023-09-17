@@ -1,15 +1,44 @@
 conf-dir: /etc/certSync
-certificate-server-url: https://certs
-certificate-server-key: /etc/certSync/<host>.key
-certificate-server-cert: /etc/certSync/<host>.crt
-certificate-target-dir: /etc/certSync/certs
-certs:
-  - name: <my Let's Encrypt domain>
-    files:
-      - name: cert.pem
-      - name: chain.pem
-      - name: fullchain.pem
-      - name: privkey.pem
-        mode: 750 
-      - name: README
-    scripts:
+scripts-dir: /etc/certSync/scripts
+sync:
+  - name: nginx-sync 
+    type: http
+    cache-dir: /etc/certSync/cache
+    target-dir: /etc/certSync/certs
+    url: https://certs
+    key: /etc/certSync/<host>.key
+    cert: /etc/certSync/<host>.crt
+    domains:
+      - name: <certificate domain name 1>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
+      - name: <certificate domain name 2>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
+  - name: letsencrypt-dir-sync 
+    type: directory
+    source-dir: /opt/letsencrypt/etc/letsencrypt/live
+    target-dir: /etc/ssl
+    domains:
+      - name <certificate domain name 1>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
+      - name <certificate domain name 2>
+        files:
+          - name: <cert file 1>
+          - name: <cert file 2>
+        scripts:
+          - <post update script name 1>
+          - <post update script name 2>
