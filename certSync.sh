@@ -133,7 +133,7 @@ downloadFile() {
 
   logDebug 1 "Downloading '${url}' to '${file}'"
   logDebug 2 "Using cert '${cert}' and key '${key}'"
-  curl --silent --cert ${cert} --key ${key} --cert-type PEM ${url} -o ${file}
+  curl --silent --fail-with-body --cert ${cert} --key ${key} --cert-type PEM ${url} -o ${file}
 
   if [ $? -ne 0 ]
   then
