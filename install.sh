@@ -54,6 +54,7 @@ fi
 
 echo "Downloading from GitHub (${BRANCH})"
 download "${GITHUB_URL}/raw/${BRANCH}/${BASE_NAME}.sh" "${OPT_DIR}/${BASE_NAME}.sh"
+chmod 755 ${OPT_DIR}/${BASE_NAME}.sh
 download "${GITHUB_URL}/raw/${BRANCH}/${BASE_NAME}.yml.template" "${ETC_DIR}/${BASE_NAME}.yml.template"
 
 echo "Installation complete!"
