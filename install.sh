@@ -39,10 +39,17 @@ fi
 
 if ! ${update_only}
 then
-  echo "Installing dependencies"
-  apt-get update -qq && apt-get install -qq -y --no-install-recommends curl tar
-  curl --silent --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz \
+  echo "Installing yq"
+  curl --silent --fail-with-body --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz | \
     tar xz && mv ${YQ_BINARY} /usr/bin/yq
+
+  if [ $? -ne 0 ]
+  then
+    echo "Unable to install yq" >&2
+    echo "Install command: curl --silent --fail-with-body --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz | \
+      tar xz && mv ${YQ_BINARY} /usr/bin/yq
+    exit 1
+  fi
 
   echo "Creating directories"
   for dir in ${OPT_DIR} ${ETC_DIR} ${SCRIPTS_DIR}
