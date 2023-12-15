@@ -149,12 +149,13 @@ filesDiffer() {
   diff ${left} ${right} >/dev/null 2>&1
   if [ $? -ne 0 ]
   then
+    echo "${left} - ${right}"
     # There are differences between the files
     logDebug 1 "Found differences between ${left} and ${right}"
-    return $(true; echo $?)
+    return 0 
   fi
   logDebug 1 "No differences between ${left} and ${right}"
-  return $(false ; echo $?)
+  return 1
 }
 
 updateFile() {
@@ -217,9 +218,9 @@ processHttpSync() {
   logDebug 1 "Key: '${key}'"
   logDebug 1 "Files:\n${files}"
 
-  if [ ${reset} ]
+  if ${reset}
   then
-    logDebug 1 "Cleaning '${cacheDir}' and '${targetDir}'"
+    logDebug 0 "Cleaning '${cacheDir}' and '${targetDir}'"
     rm -rf ${cacheDir}
     rm -rf ${targetDir}
   fi
@@ -227,7 +228,7 @@ processHttpSync() {
   ensureDir ${cacheDir}
   ensureDir ${targetDir}
 
-  local -i domainUpdated=$(false ; echo $?)
+  local domainUpdated=false
   for file in ${files}
   do
     logDebug 1 "Processing file: '${file}'"
@@ -236,11 +237,11 @@ processHttpSync() {
     if filesDiffer ${cacheDir}/${domain}/${file} ${targetDir}/${domain}/${file}
     then
       updateFile ${cacheDir} ${targetDir} ${domain} ${file} ${syncName}
-      domainUpdated=$(true ; echo $?)
+      domainUpdated=true
     fi
   done
 
-  if [ $(true ; echo $?) -eq ${domainUpdated} ]
+  if ${domainUpdated}
   then
     echo "${domain} updated, executing scripts"
     executeScripts ${syncName} ${domain}
@@ -261,17 +262,17 @@ processDirectorySync() {
   logDebug 1 "Target directory: '${targetDir}'"
   logDebug 1 "Files:\n${files}"
 
-  local -i domainUpdated=$(false ; echo $?)
+  local domainUpdated=false
   for file in ${files}
   do
     if filesDiffer ${sourceDir}/${domain}/${file} ${targetDir}/${domain}/${file}
     then
       updateFile ${sourceDir} ${targetDir} ${domain} ${file} ${syncName}
-      domainUpdated=$(true ; echo $?)
+      domainUpdated=true
     fi
   done
 
-  if [ $(true ; echo $?) -eq ${domainUpdated} ]
+  if ${domainUpdated}
   then
     echo "${domain} updated, executing scripts"
     executeScripts ${syncName} ${domain}
@@ -291,7 +292,6 @@ executeScripts() {
   if [ "null" != "${scripts}" ]
   then
     # There are scripts, run them
-    logDebug 0 "${domain} changed, executing scripts"
     for script in ${scripts}
     do
       # Export the set of variables to make available in the scripts
@@ -334,7 +334,7 @@ fi
 
 declare -i debug=-1
 export debug
-declare -i reset=false
+declare reset=false
 export reset
 
 while [ $# -gt 0 ]
