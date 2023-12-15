@@ -40,7 +40,11 @@ fi
 if ! ${update_only}
 then
   echo "Installing yq"
+  yq_install_dir=/tmp/yq-install
+  mkdir -p ${yq_install_dir} 
+  cd ${yq_install_dir}
   curl --silent --fail-with-body --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz | tar xz && mv ${YQ_BINARY} /usr/bin/yq
+  rm -rf ${yq_install_dir} 
 
   if [ $? -ne 0 ]
   then
