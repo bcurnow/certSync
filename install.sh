@@ -4,7 +4,7 @@ download () {
   local url=$1
   local target=$2
 
-  curl --silent --location -o "${target}" "${url}"
+  curl --silent --fail-with-body --location -o "${target}" "${url}"
 
   if [ $? -ne 0 ]
   then
