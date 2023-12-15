@@ -19,6 +19,8 @@ Run the following command: ```curl --location https://github.com/bcurnow/certSyn
 
 This will install the dependencies, create the /opt/certSync and /etc/certSync directory structures and places [certSync.sh](certSync.sh) in /opt/certSync and [certSync.yml.template](certSync.yml.template) in /etc/certSync.
 
+Running ```curl --location https://github.com/bcurnow/certSync/raw/main/install.sh | sudo bash -s update``` will only get the latest from Github and skip dependency and directory creation.
+
 ## Manual
 
 ### Dependencies
