@@ -137,7 +137,7 @@ downloadFile() {
 
   if [ $? -ne 0 ]
   then
-    logFatal "Unable to download '${url}' to '${file}': curl exited with a non-zero exit code"
+    logFatal "Unable to download '${url}' to '${file}': curl exited with a non-zero exit code\ncurl command: curl --silent --fail-with-body --cert ${cert} --key ${key} --cert-type PEM ${url} -o ${file}"
   fi
 }
 
