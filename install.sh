@@ -47,7 +47,7 @@ then
   then
     echo "Unable to install yq" >&2
     echo "Install command: curl --silent --fail-with-body --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz | \
-      tar xz && mv ${YQ_BINARY} /usr/bin/yq
+      tar xz && mv ${YQ_BINARY} /usr/bin/yq"
     exit 1
   fi
 
