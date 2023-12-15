@@ -13,10 +13,10 @@ download () {
   fi
 }
 
-update=$1
 update_only=false
-if [ -z "${update}" ] && [ "${update}" == "update" ]
+if [ -n "${1}" ] && [ "${1}" == "update" ]
 then
+  echo "Update only"
   update_only=true
 fi
   
