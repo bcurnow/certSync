@@ -217,7 +217,15 @@ processHttpSync() {
   logDebug 1 "Key: '${key}'"
   logDebug 1 "Files:\n${files}"
 
+  if [ ${reset} ]
+  then
+    logDebug 1 "Cleaning '${cacheDir}' and '${targetDir}'"
+    rm -rf ${cacheDir}
+    rm -rf ${targetDir}
+  fi
+  
   ensureDir ${cacheDir}
+  ensureDir ${targetDir}
 
   local -i domainUpdated=$(false ; echo $?)
   for file in ${files}
@@ -326,6 +334,8 @@ fi
 
 declare -i debug=-1
 export debug
+declare -i reset=false
+export reset
 
 while [ $# -gt 0 ]
 do
@@ -333,6 +343,10 @@ do
     -c|--config)
       confFile=$2
       shift
+      shift
+      ;;
+    -r|--reset)
+      reset=true
       shift
       ;;
     -d|--debug)
