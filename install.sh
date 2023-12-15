@@ -13,6 +13,13 @@ download () {
   fi
 }
 
+local update=$1
+local update_only=false
+if [ -z "${update}" ] && [ "${update}" == "update" ]
+then
+  update_only=true
+fi
+  
 YQ_VERSION=v4.35.1
 YQ_BINARY=yq_linux_amd64
 
@@ -30,17 +37,20 @@ then
   exit 1
 fi
 
-echo "Installing dependencies"
-apt-get update -qq && apt-get install -qq -y --no-install-recommends curl tar
-curl --silent --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz \
-  tar xz && mv ${YQ_BINARY} /usr/bin/yq
+if ! ${update_only}
+then
+  echo "Installing dependencies"
+  apt-get update -qq && apt-get install -qq -y --no-install-recommends curl tar
+  curl --silent --location https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz \
+    tar xz && mv ${YQ_BINARY} /usr/bin/yq
 
-echo "Creating directories"
-for dir in ${OPT_DIR} ${ETC_DIR} ${SCRIPTS_DIR}
-do
-  mkdir -p ${dir}
-  chmod 755 ${dir}
-done
+  echo "Creating directories"
+  for dir in ${OPT_DIR} ${ETC_DIR} ${SCRIPTS_DIR}
+  do
+    mkdir -p ${dir}
+    chmod 755 ${dir}
+  done
+fi
 
 echo "Downloading from GitHub (${BRANCH})"
 download "${GITHUB_URL}/raw/${BRANCH}/${BASE_NAME}.sh" "${OPT_DIR}/${BASE_NAME}.sh"
