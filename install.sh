@@ -13,8 +13,8 @@ download () {
   fi
 }
 
-local update=$1
-local update_only=false
+update=$1
+update_only=false
 if [ -z "${update}" ] && [ "${update}" == "update" ]
 then
   update_only=true
