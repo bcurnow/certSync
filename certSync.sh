@@ -133,11 +133,12 @@ downloadFile() {
 
   logDebug 1 "Downloading '${url}' to '${file}'"
   logDebug 2 "Using cert '${cert}' and key '${key}'"
-  curl --silent --fail-with-body --cert ${cert} --key ${key} --cert-type PEM ${url} -o ${file}
+  curlCmd="curl --silent --show-error --fail-with-body --cert ${cert} --key ${key} --cert-type PEM --key-type PEM ${url} -o ${file}"
+  output=$(${curlCmd} 2>&1)
 
   if [ $? -ne 0 ]
   then
-    logFatal "Unable to download '${url}' to '${file}': curl exited with a non-zero exit code\ncurl command: curl --silent --fail-with-body --cert ${cert} --key ${key} --cert-type PEM ${url} -o ${file}"
+    logFatal "Unable to download '${url}' to '${file}'\n  curl exited with a non-zero exit code\n  curl command: ${curlCmd}\n  Output:\n${output}"
   fi
 }
 
